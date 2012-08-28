@@ -59,6 +59,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -69,10 +70,11 @@
     <Compile Include="HashTableEntry.cs" />
     <Compile Include="MessageBus.cs" />
     <Compile Include="Messages\HeartBeat.cs" />
-    <Compile Include="Messages\IMessage.cs" />
     <Compile Include="Messages\Message.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="IPEndPointParser.cs" />
+    <Compile Include="RequestHandler.cs" />
     <Compile Include="ZMQTransport.cs" />
   </ItemGroup>
   <ItemGroup>

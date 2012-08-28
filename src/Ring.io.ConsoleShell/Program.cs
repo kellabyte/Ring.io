@@ -8,6 +8,7 @@ namespace Ring.io.ConsoleShell
 {
     class Program
     {
+        private const int DEFAULT_PORT = 5991;
         private static Timer timer;
         private static List<Node> nodes = new List<Node>();
         private static List<Node> seedNodes = new List<Node>();
@@ -91,7 +92,7 @@ namespace Ring.io.ConsoleShell
                         }
                         else
                         {
-                            int port = nodes[nodes.Count - 1].Entry.Address.Port + 1;
+                            int port = DEFAULT_PORT + nodes.Count;
                             node = new Node(port);
                             nodes.Add(node);
                             node.Open();

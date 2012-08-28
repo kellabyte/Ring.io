@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Numerics;
 using System.Text;
 
 namespace Ring.io
 {
     public class HashTableEntry
     {
-        public byte[] NodeId { get; set; }
-        public byte[] RingToken { get; set; }
-        public IPEndPoint Address { get; set; }
+        public string NodeId { get; set; }
+        public string RingToken { get; set; }
+        public string Address { get; set; }
         public DateTime LastSeen { get; set; }
     }
 }

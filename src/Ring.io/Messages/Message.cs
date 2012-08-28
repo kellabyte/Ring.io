@@ -7,23 +7,18 @@ namespace Ring.io.Messages
 {
     public class Message
     {
-        public string Type { get; set; }
+        public Message()
+        {
+            this.Id = Guid.NewGuid();
+            this.DateTime = DateTime.UtcNow;
+            this.Messages = new Dictionary<string, string>();
+        }
+
+        public Guid Id { get; set; }
+        public Guid? CorrelationId { get; set; }
         public string Source { get; set; }
         public string Destination { get; set; }
         public DateTime DateTime { get; set; }
-
-        private IMessage msg;
-        public IMessage Msg
-        {
-            get { return msg; }
-            set
-            {
-                this.msg = value;
-                if (this.msg != null)
-                {
-                    this.Type = this.msg.GetType().Name;
-                }
-            }
-        }
+        public Dictionary<string, string> Messages { get; set; }
     }
 }

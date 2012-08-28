@@ -18,56 +18,28 @@ namespace Ring.io
             this.transport = transport;
             this.serializer = new JsonSerializer<Message>();
 
-            this.HandleMessages();
+            this.transport.Handlers.Add(HandleRequest);
         }
 
-        private void HandleMessages()
+        private void HandleRequest(Message request, Message response)
         {
-            Task.Factory.StartNew(() =>
-                {
-                    while (true)
-                    {
-                        string message = this.transport.Requests.Take();
-                        var msg = this.serializer.DeserializeFromString(message);
-                        if (msg != null)
-                        {
-                            this.Handle(msg);
-                        }
-                    }
-                });
+            var heartbeat = new HeartBeat();
+            heartbeat.Nodes = node.Nodes;
 
-            Task.Factory.StartNew(() =>
-                {
-                    while (true)
-                    {
-                        string message = this.transport.Responses.Take();
-                        var msg = this.serializer.DeserializeFromString(message);
-                        if (msg != null)
-                        {
-                            this.Handle(msg);
-                        }
-                    }
-                });
-        }
+            this.AddMessage<HeartBeat>(response, heartbeat);
 
-        private void Handle(Message message)
-        {
-            string[] sourceAddress = message.Source.Split(':');
+            string[] sourceAddress = request.Source.Split(':');
             var sourceEndPoint = new IPEndPoint(IPAddress.Parse(sourceAddress[0]), int.Parse(sourceAddress[1]));
 
             System.Diagnostics.Debug.WriteLine(string.Format(
                 "{0}\t{1} received {2}",
                 DateTime.Now,
-                this.node.Entry.Address.Port,
+                this.node.Entry.Address,
                 sourceEndPoint.Port));
 
             // TODO: Here we handle the messages that get received by the node.
             // TODO: Call methods on the Node class to merge hash rings and do failure detection.
             // TODO: Liskov substitution principle violation that I'm not happy about.
-            if (message is HeartBeat)
-            {
-
-            }
         }
 
         public void Send(Message message)
@@ -82,6 +54,12 @@ namespace Ring.io
             message.Source = this.transport.EndPoint.ToString();
             string msg = this.serializer.SerializeToString(message);
             this.transport.Send(msg, endPoint);
+        }
+
+        public void AddMessage<T>(Message message, T msg)
+        {
+            string serializedMessage = JsonSerializer.SerializeToString<T>(msg);
+            message.Messages.Add(msg.GetType().Name.ToLowerInvariant(), serializedMessage);
         }
     }
 }
