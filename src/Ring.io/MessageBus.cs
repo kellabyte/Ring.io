@@ -18,39 +18,56 @@ namespace Ring.io
             this.transport = transport;
             this.serializer = new JsonSerializer<Message>();
 
-            this.transport.Handlers.Add(HandleRequest);
+            this.transport.RequestHandlers.Add(HandleRequest);
+            this.transport.ResponseHandlers.Add(HandleResponse);
         }
 
         private void HandleRequest(Message request, Message response)
         {
-            var heartbeat = new HeartBeat();
-            heartbeat.Nodes = node.Nodes;
-
-            this.AddMessage<HeartBeat>(response, heartbeat);
-
-            string[] sourceAddress = request.Source.Split(':');
-            var sourceEndPoint = new IPEndPoint(IPAddress.Parse(sourceAddress[0]), int.Parse(sourceAddress[1]));
-
-            System.Diagnostics.Debug.WriteLine(string.Format(
-                "{0}\t{1} received {2}",
-                DateTime.Now,
-                this.node.Entry.Address,
-                sourceEndPoint.Port));
+            //System.Diagnostics.Debug.WriteLine(string.Format(
+            //    "{0}\t{1} received {2}",
+            //    DateTime.Now,
+            //    this.node.Entry.Address,
+            //    sourceEndPoint.Port));
 
             // TODO: Here we handle the messages that get received by the node.
             // TODO: Call methods on the Node class to merge hash rings and do failure detection.
             // TODO: Liskov substitution principle violation that I'm not happy about.
+
+            if (response != null)
+            {
+                response.Source = this.node.Entry.Address;
+
+                var heartbeat = new HeartBeat();
+                heartbeat.Nodes = node.Nodes;
+
+                this.AddMessage<HeartBeat>(response, heartbeat);
+
+                string[] sourceAddress = request.Source.Split(':');
+                var sourceEndPoint = new IPEndPoint(IPAddress.Parse(sourceAddress[0]), int.Parse(sourceAddress[1]));
+            }
         }
 
-        public void Send(Message message)
+        private void HandleResponse(Message response)
         {
-            message.Source = this.transport.EndPoint.ToString();
-            string msg = this.serializer.SerializeToString(message);
-            this.transport.Send(msg);
+            // TODO: Here we handle the messages that get received by the node.
+            // TODO: Call methods on the Node class to merge hash rings and do failure detection.
+            // TODO: Liskov substitution principle violation that I'm not happy about.
+
+            //System.Diagnostics.Debug.WriteLine(string.Format(
+            //    "{0}\t{1} received {2}",
+            //    DateTime.Now,
+            //    this.node.Entry.Address,
+            //    sourceEndPoint.Port));
         }
 
         public void Send(Message message, IPEndPoint endPoint)
         {
+            System.Diagnostics.Debug.WriteLine(string.Format(
+                "{0} SENT {1}",
+                this.node.Entry.Address,
+                message.Id));
+
             message.Source = this.transport.EndPoint.ToString();
             string msg = this.serializer.SerializeToString(message);
             this.transport.Send(msg, endPoint);

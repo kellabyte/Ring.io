@@ -19,11 +19,13 @@ namespace Ring.io
         {
             this.EndPoint = endPoint;
             this.serializer = new JsonSerializer<Message>();
-            this.Handlers = new List<RequestHandler>();
+            this.RequestHandlers = new List<RequestHandler>();
+            this.ResponseHandlers = new List<ResponseHandler>();
         }
 
         public IPEndPoint EndPoint { get; private set; }
-        public List<RequestHandler> Handlers { get; set; }
+        public List<RequestHandler> RequestHandlers { get; set; }
+        public List<ResponseHandler> ResponseHandlers { get; set; }
 
         public void Open()
         {
@@ -36,8 +38,9 @@ namespace Ring.io
                 {
                     while (true)
                     {
-                        var request = this.socket.Recv(Encoding.Unicode);
-                        this.HandleRequest(request, this.socket);
+                        var bytes = this.socket.Recv();
+                        var request = Encoding.UTF8.GetString(bytes);
+                        this.HandleMessage(request, this.socket);
                     }
                 });
         }
@@ -46,11 +49,6 @@ namespace Ring.io
         {
             this.socket.Dispose();
             this.context.Dispose();
-        }
-
-        public void Send(string text)
-        {
-            this.socket.Send(text, Encoding.Unicode);
         }
 
         public void Send(string text, IPEndPoint endPoint)
@@ -62,32 +60,52 @@ namespace Ring.io
                     {
                         string addressString = "tcp://" + endPoint;
                         requestSocket.Connect(addressString);
-                        requestSocket.Send(text, Encoding.Unicode);
-                        var response = requestSocket.Recv(Encoding.Unicode);
-                        HandleRequest(response, requestSocket);
+                        requestSocket.Send(text, Encoding.UTF8);
+                        var response = requestSocket.Recv(Encoding.UTF8);
+                        HandleMessage(response, requestSocket);
                     }
                 });
         }
 
-        private void HandleRequest(string requestText, Socket socket)
+        private void HandleMessage(string message, Socket requestSocket)
         {
-            if (requestText != string.Empty)
+            if (message != string.Empty)
             {
-                var request = this.serializer.DeserializeFromString(requestText);
-                var response = new Message();
-                response.CorrelationId = request.Id;
-                response.Destination = request.Source;
-                foreach (var handler in this.Handlers)
+                var request = this.serializer.DeserializeFromString(message);
+
+                System.Diagnostics.Debug.WriteLine(string.Format(
+                    "{0} RECV {1}",
+                    this.EndPoint.Port,
+                    request.Id));
+
+                Message response = null;
+                if (request.CorrelationId == null)
                 {
-                    handler(request, response);
-                }
-                if (request.CorrelationId != null)
-                {
-                    socket.Send(this.serializer.SerializeToString(response), Encoding.Unicode);
+                    response = new Message();
+                    response.CorrelationId = request.Id;
+                    response.Destination = request.Source;
+                    foreach (var handler in this.RequestHandlers)
+                    {
+                        handler(request, response);
+                    }
                 }
                 else
                 {
-                    socket.Send();
+                    foreach (var handler in this.ResponseHandlers)
+                    {
+                        handler(request);
+                    }                    
+                }
+                
+                if (request.CorrelationId == null)
+                {
+                    System.Diagnostics.Debug.WriteLine(string.Format(
+                        "{0} SENT {1}",
+                        this.EndPoint.Port,
+                        response.Id));
+
+                    var msg = this.serializer.SerializeToString(response);
+                    requestSocket.Send(msg, Encoding.UTF8);
                 }
             }
         }
