@@ -19,13 +19,13 @@ namespace Ring.io
         {
             this.EndPoint = endPoint;
             this.serializer = new JsonSerializer<Message>();
-            this.RequestHandlers = new List<RequestHandler>();
-            this.ResponseHandlers = new List<ResponseHandler>();
+            this.RequestHandlers = new List<IRequestHandler>();
+            this.ResponseHandlers = new List<IResponseHandler>();
         }
 
         public IPEndPoint EndPoint { get; private set; }
-        public List<RequestHandler> RequestHandlers { get; set; }
-        public List<ResponseHandler> ResponseHandlers { get; set; }
+        public List<IRequestHandler> RequestHandlers { get; set; }
+        public List<IResponseHandler> ResponseHandlers { get; set; }
 
         public void Open()
         {
@@ -86,14 +86,14 @@ namespace Ring.io
                     response.Destination = request.Source;
                     foreach (var handler in this.RequestHandlers)
                     {
-                        handler(request, response);
+                        handler.HandleRequest(request, response);
                     }
                 }
                 else
                 {
                     foreach (var handler in this.ResponseHandlers)
                     {
-                        handler(request);
+                        handler.HandleResponse(request);
                     }                    
                 }
                 

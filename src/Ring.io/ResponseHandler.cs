@@ -6,5 +6,8 @@ using Ring.io.Messages;
 
 namespace Ring.io
 {
-    public delegate void ResponseHandler(Message request);
+    public interface IResponseHandler
+    {
+        void HandleResponse(Message response);
+    }
 }

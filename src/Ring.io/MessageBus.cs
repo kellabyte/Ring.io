@@ -6,7 +6,7 @@ using ServiceStack.Text;
 
 namespace Ring.io
 {
-    public class MessageBus
+    public class MessageBus : IRequestHandler, IResponseHandler
     {
         private Node node;
         private ZMQTransport transport;
@@ -18,11 +18,11 @@ namespace Ring.io
             this.transport = transport;
             this.serializer = new JsonSerializer<Message>();
 
-            this.transport.RequestHandlers.Add(HandleRequest);
-            this.transport.ResponseHandlers.Add(HandleResponse);
+            this.transport.RequestHandlers.Add(this);
+            this.transport.ResponseHandlers.Add(this);
         }
 
-        private void HandleRequest(Message request, Message response)
+        public void HandleRequest(Message request, Message response)
         {
             //System.Diagnostics.Debug.WriteLine(string.Format(
             //    "{0}\t{1} received {2}",
@@ -48,7 +48,7 @@ namespace Ring.io
             }
         }
 
-        private void HandleResponse(Message response)
+        public void HandleResponse(Message response)
         {
             // TODO: Here we handle the messages that get received by the node.
             // TODO: Call methods on the Node class to merge hash rings and do failure detection.
