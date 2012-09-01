@@ -67,6 +67,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExceptionUtility.cs" />
     <Compile Include="HashTableEntry.cs" />
     <Compile Include="MessageBus.cs" />
     <Compile Include="Messages\HeartBeat.cs" />

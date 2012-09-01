@@ -36,14 +36,17 @@ namespace Ring.io
 
             if (response != null)
             {
-                response.Source = this.node.Entry.Address;
+                Process(request);
+
+                response.SourceAddress = this.node.Entry.Address;
+                response.SourceNodeId = this.node.Entry.NodeId;
 
                 var heartbeat = new HeartBeat();
                 heartbeat.Nodes = node.Nodes;
 
                 this.AddMessage<HeartBeat>(response, heartbeat);
 
-                string[] sourceAddress = request.Source.Split(':');
+                string[] sourceAddress = request.SourceAddress.Split(':');
                 var sourceEndPoint = new IPEndPoint(IPAddress.Parse(sourceAddress[0]), int.Parse(sourceAddress[1]));
             }
         }
@@ -59,16 +62,20 @@ namespace Ring.io
             //    DateTime.Now,
             //    this.node.Entry.Address,
             //    sourceEndPoint.Port));
+
+            Process(response);
         }
 
         public void Send(Message message, IPEndPoint endPoint)
         {
-            System.Diagnostics.Debug.WriteLine(string.Format(
-                "{0} SENT {1}",
-                this.node.Entry.Address,
-                message.Id));
+            //System.Diagnostics.Debug.WriteLine(string.Format(
+            //    "{0} SENT {1}",
+            //    this.node.Entry.Address,
+            //    message.Id));
 
-            message.Source = this.transport.EndPoint.ToString();
+            message.SourceAddress = this.node.Entry.Address;
+            message.SourceNodeId = this.node.Entry.NodeId;
+            message.DestinationAddress = endPoint.ToString();
             string msg = this.serializer.SerializeToString(message);
             this.transport.Send(msg, endPoint);
         }
@@ -77,6 +84,21 @@ namespace Ring.io
         {
             string serializedMessage = JsonSerializer.SerializeToString<T>(msg);
             message.Messages.Add(msg.GetType().Name.ToLowerInvariant(), serializedMessage);
+        }
+
+        private void Process(Message message)
+        {
+            string msg;
+            if (message.Messages.TryGetValue(typeof(HeartBeat).Name.ToLower(), out msg))
+            {
+                var receivedHeartBeat = JsonSerializer.DeserializeFromString<HeartBeat>(msg);
+                this.node.MergeTables(message.SourceNodeId, receivedHeartBeat.Nodes);
+            }
+        }
+
+        private void UpdateLastUpdated(Message message)
+        {
+            // TODO
         }
     }
 }

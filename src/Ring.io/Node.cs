@@ -51,7 +51,9 @@ namespace Ring.io
             hash = MD5.Create();
             byte[] bytes = Encoding.ASCII.GetBytes(endpoint.ToString());
             this.Entry.NodeId = new BigInteger(hash.ComputeHash(bytes)).ToString();
-            this.Entry.LastSeen = DateTime.MinValue;
+            this.Entry.LastUpdated = DateTime.MinValue;
+
+            this.Nodes.Add(this.Entry.NodeId, this.Entry);
         }
 
         public HashTableEntry Entry { get; private set; }
@@ -87,6 +89,32 @@ namespace Ring.io
                 return;
             }
             this.Nodes.Add(seedEntry.NodeId, seedEntry);
+        }
+
+        public void MergeTables(string nodeId, Dictionary<string, HashTableEntry> nodes)
+        {
+            lock (this.Nodes)
+            {
+                foreach (var node in nodes)
+                {
+                    if (node.Key != this.Entry.NodeId)
+                    {
+                        HashTableEntry entry;
+                        if (this.Nodes.TryGetValue(node.Key, out entry))
+                        {
+                            if (entry.NodeId == nodeId)
+                            {
+                                entry.LastUpdated = DateTime.UtcNow;
+                            }
+                        }
+                        else
+                        {
+                            node.Value.LastUpdated = DateTime.UtcNow;
+                            this.Nodes.Add(node.Key, node.Value);
+                        }
+                    }
+                }
+            }
         }
 
         private void HeartBeatTimer(object state)

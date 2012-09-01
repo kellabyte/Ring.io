@@ -21,9 +21,9 @@ namespace Ring.io.ConsoleShell
             Console.SetWindowSize(80, 25);
             Console.Clear();
 
-            timer = new Timer(timer_Callback, null, 500, 500);
+            timer = new Timer(timer_Callback, null, 1000, 1000);
             DrawScreen();
-
+            
             while (true)
             {
                 ConsoleKeyInfo key = Console.ReadKey();
@@ -59,10 +59,13 @@ namespace Ring.io.ConsoleShell
                 Console.SetCursorPosition(0, i + 2);
                 Console.Write(i + 1 + "\t");
 
-                foreach (var node in nodes[i].Nodes)
+                lock (nodes[i].Nodes)
                 {
-                    int index = nodes.FindIndex(x => x.Entry.NodeId == node.Value.NodeId);
-                    Console.Write(index + 1 + " ");
+                    foreach (var node in nodes[i].Nodes)
+                    {
+                        int index = nodes.FindIndex(x => x.Entry.NodeId == node.Value.NodeId);
+                        Console.Write(index + 1 + " ");
+                    }
                 }
                 Console.WriteLine();
             }
@@ -111,6 +114,8 @@ namespace Ring.io.ConsoleShell
                             node.AddSeedNode(seed.Entry);
                         }
                     }
+                    break;
+                case "remove":
                     break;
             }
         }

@@ -16,8 +16,9 @@ namespace Ring.io.Messages
 
         public Guid Id { get; set; }
         public Guid? CorrelationId { get; set; }
-        public string Source { get; set; }
-        public string Destination { get; set; }
+        public string SourceAddress { get; set; }
+        public string SourceNodeId { get; set; }
+        public string DestinationAddress { get; set; }
         public DateTime DateTime { get; set; }
         public Dictionary<string, string> Messages { get; set; }
     }
